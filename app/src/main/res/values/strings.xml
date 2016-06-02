@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">AlterRoute</string>
+
+    <string name="accessToken">pk.eyJ1Ijoid2FsdGVyamdzcCIsImEiOiJjaW95OTI5cmswMDhyejBtNTVqemVrbjBnIn0.QCKkoNq_g8aM9XjpTeJJHw</string>
+
+    <string name="gps_not_found_message">Want to enable?</string>
+    <string name="gps_not_found_title">GPS not found</string>
+    <string name="last_saved_location">Last saved location being used</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+</resources>
