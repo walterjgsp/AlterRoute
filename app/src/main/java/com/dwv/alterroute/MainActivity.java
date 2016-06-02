@@ -17,8 +17,10 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.widget.FrameLayout;
+import android.widget.SearchView;
 import android.widget.Toast;
 
+import com.arlib.floatingsearchview.FloatingSearchView;
 import com.dwv.alterroute.Misc.PreferencesMan;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -67,8 +69,6 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
     public void createMapFragment(){
 
         Bundle bundle = new Bundle();
-        bundle.putDouble(TAG_LATIT, latitude);
-        bundle.putDouble(TAG_LONGI, longitude);
 
         Fragment aFrag = new FragmentMap();
         aFrag.setArguments(bundle);
