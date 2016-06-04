@@ -2,6 +2,7 @@
     <string name="app_name">AlterRoute</string>
 
     <string name="accessToken">pk.eyJ1Ijoid2FsdGVyamdzcCIsImEiOiJjaW95OTI5cmswMDhyejBtNTVqemVrbjBnIn0.QCKkoNq_g8aM9XjpTeJJHw</string>
+    <string name="accessTokenGoogle">AIzaSyCcGmiNf3-aD1sndHqYxHKmdZkt0FTXfTs</string>
 
     <string name="gps_not_found_message">Want to enable?</string>
     <string name="gps_not_found_title">GPS not found</string>

@@ -32,6 +32,12 @@ import com.mapbox.services.directions.v5.models.DirectionsRoute;
 import com.mapbox.services.geocoding.v5.GeocodingCriteria;
 import com.mapbox.services.geocoding.v5.models.GeocodingFeature;
 
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 
 import retrofit2.Call;
@@ -179,9 +185,6 @@ public class FragmentMap  extends Fragment {
                 .setAlternatives(true)
                 .build();
 
-        Log.d(TAG,"origin:"+origin.getLatitude()+" "+origin.getLongitude());
-        Log.d(TAG,"destination:"+destination.getLatitude()+" "+destination.getLongitude());
-
         client.enqueueCall(new Callback<DirectionsResponse>() {
             @Override
             public void onResponse(Call<DirectionsResponse> call, Response<DirectionsResponse> response) {
@@ -211,10 +214,20 @@ public class FragmentMap  extends Fragment {
 
     private void drawRoute(DirectionsRoute route) {
         // Convert LineString coordinates into LatLng[]
+
         LineString lineString = LineString.fromPolyline(route.getGeometry(), Constants.OSRM_PRECISION_V5);
         List<Position> coordinates = lineString.getCoordinates();
+
+        StringBuffer elevCoordinates = new StringBuffer();
+
+        elevCoordinates.append(coordinates.get(0).getLatitude()+","+coordinates.get(0).getLongitude());
+
         LatLng[] points = new LatLng[coordinates.size()];
         for (int i = 0; i < coordinates.size(); i++) {
+
+            if(i>0)
+                elevCoordinates.append("|"+coordinates.get(i).getLatitude()+","+coordinates.get(i).getLongitude());
+
             points[i] = new LatLng(
                     coordinates.get(i).getLatitude(),
                     coordinates.get(i).getLongitude());
@@ -226,7 +239,28 @@ public class FragmentMap  extends Fragment {
                 .color(Color.parseColor("#009688"))
                 .width(5));
     }
+    private void getElevationFromGoogleMaps(String requisition) throws IOException {
 
+
+
+        StringBuffer uri = new StringBuffer();
+        uri.append("https://maps.googleapis.com/maps/api/elevation/json?path=");
+        uri.append(requisition);
+        uri.append("&key=");
+        uri.append(mContext.getResources().getString(R.string.accessTokenGoogle));
+
+        URL url = new URL(uri.toString());
+
+        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+
+        try{
+            InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+            Log.d(TAG,in.toString());
+        }finally {
+            urlConnection.disconnect();
+        }
+
+    }
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
