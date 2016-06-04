@@ -1,7 +1,6 @@
 package com.dwv.alterroute;
 
 import android.app.Fragment;
-import android.app.FragmentManager;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -55,8 +54,10 @@ public class FragmentMap  extends Fragment {
 
     private DirectionsRoute currentRoute;
 
+    //private Waypoint origin;
     private Position origin;
     // Plaza del Triunfo in Granada, Spain.
+    //private Waypoint destination;
     private Position destination;
 
     @Override
@@ -75,6 +76,7 @@ public class FragmentMap  extends Fragment {
                 // Customize map with markers, polylines, etc.
                 mapboxMap.setMyLocationEnabled(true);
 
+                //origin = new Waypoint(mapboxMap.getMyLocation().getLatitude(), mapboxMap.getMyLocation().getLongitude());
                 origin = Position.fromCoordinates(mapboxMap.getMyLocation().getLatitude(), mapboxMap.getMyLocation().getLongitude());
 
                 mapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
@@ -111,7 +113,8 @@ public class FragmentMap  extends Fragment {
         // Set up autocomplete widget
         final GeocoderAutoCompleteView autocomplete = (GeocoderAutoCompleteView) view.findViewById(R.id.query);
         autocomplete.setAccessToken(mContext.getResources().getString(R.string.accessToken));
-        autocomplete.setType(GeocodingCriteria.TYPE_POI);
+        autocomplete.setType(GeocodingCriteria.TYPE_ADDRESS);
+        autocomplete.setProximity(origin);
         autocomplete.setOnFeatureListener(new GeocoderAutoCompleteView.OnFeatureListener() {
             @Override
             public void OnFeatureClick(GeocodingFeature feature) {
@@ -125,6 +128,21 @@ public class FragmentMap  extends Fragment {
                 fab_route.setVisibility(View.VISIBLE);
             }
         });
+
+       autocomplete.setOnClickListener(new GeocoderAutoCompleteView.OnClickListener(){
+           @Override
+           public void onClick(View v) {
+               map.clear();
+               autocomplete.setText("");
+
+               map.moveCamera(CameraUpdateFactory.newCameraPosition(
+                       new CameraPosition.Builder()
+                               .target(new LatLng(map.getMyLocation().getLatitude(), map.getMyLocation().getLongitude()))  // set the camera's center position
+                               .zoom(14)  // set the camera's zoom level
+                               .tilt(20)  // set the camera's tilt
+                               .build()));
+           }
+       });
 
         return view;
     }
@@ -145,6 +163,7 @@ public class FragmentMap  extends Fragment {
                 .zoom(15)
                 .build();
 
+        //destination = new Waypoint(latitude,longitude);
         destination = Position.fromCoordinates(latitude,longitude);
 
         map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 5000, null);
@@ -153,11 +172,15 @@ public class FragmentMap  extends Fragment {
     private void getRoute(Position origin, Position destination) throws ServicesException {
 
         MapboxDirections client = new MapboxDirections.Builder()
-                .setOrigin(origin)
-                .setDestination(destination)
-                .setProfile(DirectionsCriteria.PROFILE_CYCLING)
                 .setAccessToken(mContext.getResources().getString(R.string.accessToken))
+                .setOrigin(Position.fromCoordinates(origin.getLatitude(),origin.getLongitude()))
+                .setDestination(Position.fromCoordinates(destination.getLatitude(),destination.getLongitude()))
+                .setProfile(DirectionsCriteria.PROFILE_DRIVING)
+                .setAlternatives(true)
                 .build();
+
+        Log.d(TAG,"origin:"+origin.getLatitude()+" "+origin.getLongitude());
+        Log.d(TAG,"destination:"+destination.getLatitude()+" "+destination.getLongitude());
 
         client.enqueueCall(new Callback<DirectionsResponse>() {
             @Override
