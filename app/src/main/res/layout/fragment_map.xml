@@ -36,12 +36,42 @@
         android:layout_margin="15dp"
         android:layout_width="70dp"
         android:layout_height="70dp"
-        android:visibility="gone"
+        android:visibility="visible"
         android:src="@drawable/ic_route"
         android:background="@drawable/fab_button_route"
         android:id="@+id/fabButton"
         app:theme="@style/Base.Widget.AppCompat.ImageButton"
         android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"/>
+        android:layout_alignParentBottom="true"
+        android:elevation="6dp"/>
+
+
+    <LinearLayout
+        android:id="@+id/container_info"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:visibility="visible"
+        android:layout_alignParentBottom="true"
+        android:background="@color/Transparent"
+        android:orientation="vertical"
+        android:elevation="5dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/adress_info"
+                android:textSize="15sp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/distance_info" />
+        </LinearLayout>
+    </LinearLayout>
 
 </RelativeLayout>

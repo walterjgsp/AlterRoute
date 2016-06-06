@@ -166,7 +166,7 @@ public class FragmentMap  extends Fragment {
         // Animate camera to geocoder result location
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(new LatLng(latitude, longitude))
-                .zoom(15)
+                .zoom(10)
                 .build();
 
         //destination = new Waypoint(latitude,longitude);
@@ -196,6 +196,7 @@ public class FragmentMap  extends Fragment {
                 }
 
                 // Print some info about the route
+                Log.d(TAG,"Routes: "+response.body().getRoutes().get(0).getDuration());
                 currentRoute = response.body().getRoutes().get(0);
                 Log.d(TAG, "Distance: " + currentRoute.getDistance());
                 Toast.makeText(mContext, "Route is " +  currentRoute.getDistance() + " meters long.", Toast.LENGTH_SHORT).show();
@@ -240,8 +241,6 @@ public class FragmentMap  extends Fragment {
                 .width(5));
     }
     private void getElevationFromGoogleMaps(String requisition) throws IOException {
-
-
 
         StringBuffer uri = new StringBuffer();
         uri.append("https://maps.googleapis.com/maps/api/elevation/json?path=");
