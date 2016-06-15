@@ -12,6 +12,12 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.dwv.alterroute.Misc.GetElevation;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.annotations.PolylineOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
@@ -129,7 +135,7 @@ public class FragmentMap  extends Fragment {
                 imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
 
                 Position position = feature.asPosition();
-                updateMap(position.getLatitude(), position.getLongitude(),autocomplete.getText().toString());
+                updateMap(position.getLatitude(), position.getLongitude(),feature.getAddress());
 
                 fab_route.setVisibility(View.VISIBLE);
             }
@@ -141,12 +147,12 @@ public class FragmentMap  extends Fragment {
                map.clear();
                autocomplete.setText("");
 
-               map.moveCamera(CameraUpdateFactory.newCameraPosition(
+               map.animateCamera(CameraUpdateFactory.newCameraPosition(
                        new CameraPosition.Builder()
                                .target(new LatLng(map.getMyLocation().getLatitude(), map.getMyLocation().getLongitude()))  // set the camera's center position
                                .zoom(14)  // set the camera's zoom level
                                .tilt(20)  // set the camera's tilt
-                               .build()));
+                               .build()),5000,null);
            }
        });
 
@@ -166,7 +172,8 @@ public class FragmentMap  extends Fragment {
         // Animate camera to geocoder result location
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(new LatLng(latitude, longitude))
-                .zoom(10)
+                .zoom(14)
+                .tilt(20)
                 .build();
 
         //destination = new Waypoint(latitude,longitude);
@@ -227,11 +234,18 @@ public class FragmentMap  extends Fragment {
         for (int i = 0; i < coordinates.size(); i++) {
 
             if(i>0)
-                elevCoordinates.append("|"+coordinates.get(i).getLatitude()+","+coordinates.get(i).getLongitude());
+                elevCoordinates.append(";"+coordinates.get(i).getLatitude()+","+coordinates.get(i).getLongitude());
 
             points[i] = new LatLng(
                     coordinates.get(i).getLatitude(),
                     coordinates.get(i).getLongitude());
+        }
+
+
+        try {
+            GetElevation.getElevation(elevCoordinates.toString(),mContext);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
         }
 
         // Draw Points on MapView
@@ -240,6 +254,7 @@ public class FragmentMap  extends Fragment {
                 .color(Color.parseColor("#009688"))
                 .width(5));
     }
+
     private void getElevationFromGoogleMaps(String requisition) throws IOException {
 
         StringBuffer uri = new StringBuffer();
