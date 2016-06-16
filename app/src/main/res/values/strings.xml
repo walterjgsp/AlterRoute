@@ -4,6 +4,12 @@
     <string name="accessToken">pk.eyJ1Ijoid2FsdGVyamdzcCIsImEiOiJjaW95OTI5cmswMDhyejBtNTVqemVrbjBnIn0.QCKkoNq_g8aM9XjpTeJJHw</string>
     <string name="accessTokenGoogle">AIzaSyCcGmiNf3-aD1sndHqYxHKmdZkt0FTXfTs</string>
 
+    <string name="address">Rua:asdad,81381,Belo Horizonte,asdasdasda MG</string>
+    <string name="distance">874m</string>
+    <string name="distance_label">Distance:</string>
+    <string name="work">500W</string>
+    <string name="work_label">Work:</string>
+
     <string name="gps_not_found_message">Want to enable?</string>
     <string name="gps_not_found_title">GPS not found</string>
     <string name="last_saved_location">Last saved location being used</string>

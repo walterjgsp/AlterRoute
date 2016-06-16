@@ -32,11 +32,99 @@
         mapbox:zoom="12"
         mapbox:tilt="20"/>
 
+    <LinearLayout
+        android:id="@+id/container_info"
+        android:layout_width="match_parent"
+        android:layout_height="165dp"
+        android:visibility="invisible"
+        android:layout_alignParentBottom="true"
+        android:background="@color/Transparent"
+        android:orientation="vertical"
+        android:elevation="5dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:padding="3dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/adress_info"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textAlignment="center"
+                android:text="@string/address"
+                android:layout_weight="1"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="5dp"
+                android:layout_weight="1"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:id="@+id/d_container"
+                    android:layout_weight="1">
+
+                    <TextView
+                        android:padding="3dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/distance_label"
+                        android:textSize="18sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:padding="3dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/distance_info"
+                        android:text="@string/distance"
+                        android:layout_weight="1"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:layout_weight="1">
+                    <TextView
+                        android:padding="3dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/work_label"
+                        android:textSize="18sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:padding="3dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/work_info"
+                        android:text="@string/work"
+                        android:layout_weight="1"/>
+                </LinearLayout>
+            </LinearLayout>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="85dp"
+                android:id="@+id/time_info"
+                android:gravity="center"
+                android:textSize="85sp"
+                android:visibility="visible"
+                android:text="@string/distance"/>
+            </LinearLayout>
+    </LinearLayout>
+
     <ImageButton
-        android:layout_margin="15dp"
+        android:layout_margin="5dp"
         android:layout_width="70dp"
         android:layout_height="70dp"
-        android:visibility="visible"
+        android:visibility="gone"
         android:src="@drawable/ic_route"
         android:background="@drawable/fab_button_route"
         android:id="@+id/fabButton"
@@ -44,34 +132,5 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
         android:elevation="6dp"/>
-
-
-    <LinearLayout
-        android:id="@+id/container_info"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:visibility="visible"
-        android:layout_alignParentBottom="true"
-        android:background="@color/Transparent"
-        android:orientation="vertical"
-        android:elevation="5dp">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/adress_info"
-                android:textSize="15sp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/distance_info" />
-        </LinearLayout>
-    </LinearLayout>
 
 </RelativeLayout>

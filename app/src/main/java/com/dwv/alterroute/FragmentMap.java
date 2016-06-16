@@ -10,14 +10,18 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.dwv.alterroute.Misc.GetElevation;
+import com.dwv.alterroute.Misc.VolleySingleton;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.annotations.PolylineOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
@@ -38,13 +42,20 @@ import com.mapbox.services.directions.v5.models.DirectionsRoute;
 import com.mapbox.services.geocoding.v5.GeocodingCriteria;
 import com.mapbox.services.geocoding.v5.models.GeocodingFeature;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.w3c.dom.Text;
+
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -63,6 +74,13 @@ public class FragmentMap  extends Fragment {
     private MapboxMap map;
 
     private ImageButton fab_route;
+
+    //Route info visualization
+    private LinearLayout container_info;
+    private TextView distance_info;
+    private TextView work_info;
+    private TextView address_info;
+    private TextView time_info;
 
     private DirectionsRoute currentRoute;
 
@@ -113,6 +131,7 @@ public class FragmentMap  extends Fragment {
                         .title("Origem")
                         .snippet("User Location"));
 
+
                 // Get route from API
                 try {
                     getRoute(origin, destination);
@@ -135,7 +154,9 @@ public class FragmentMap  extends Fragment {
                 imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
 
                 Position position = feature.asPosition();
-                updateMap(position.getLatitude(), position.getLongitude(),feature.getAddress());
+                updateMap(position.getLatitude(), position.getLongitude(),autocomplete.getText().toString());
+
+                address_info.setText(autocomplete.getText().toString());
 
                 fab_route.setVisibility(View.VISIBLE);
             }
@@ -146,6 +167,7 @@ public class FragmentMap  extends Fragment {
            public void onClick(View v) {
                map.clear();
                autocomplete.setText("");
+               setGone();
 
                map.animateCamera(CameraUpdateFactory.newCameraPosition(
                        new CameraPosition.Builder()
@@ -155,6 +177,12 @@ public class FragmentMap  extends Fragment {
                                .build()),5000,null);
            }
        });
+
+        container_info = (LinearLayout) view.findViewById(R.id.container_info);
+        distance_info = (TextView) view.findViewById(R.id.distance_info);
+        address_info = (TextView) view.findViewById(R.id.adress_info);
+        work_info = (TextView) view.findViewById(R.id.work_info);
+        time_info = (TextView) view.findViewById(R.id.time_info);
 
         return view;
     }
@@ -182,6 +210,81 @@ public class FragmentMap  extends Fragment {
         map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 5000, null);
     }
 
+    public void setVisibile(){
+        container_info.setVisibility(View.VISIBLE);
+        fab_route.setVisibility(View.GONE);
+    }
+
+    public void setGone(){
+        container_info.setVisibility(View.INVISIBLE);
+        fab_route.setVisibility(View.GONE);
+    }
+
+    public void setTime(double time){
+
+        long millis = (long) time;
+
+        long days = TimeUnit.MILLISECONDS.toDays(millis);
+        millis -= TimeUnit.DAYS.toMillis(days);
+        long hours = TimeUnit.MILLISECONDS.toHours(millis);
+        millis -= TimeUnit.HOURS.toMillis(hours);
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(millis);
+        millis -= TimeUnit.MINUTES.toMillis(minutes);
+        long seconds = TimeUnit.MILLISECONDS.toSeconds(millis);
+
+        StringBuilder sb = new StringBuilder(64);
+        if(days>0) {
+            sb.append(days);
+            sb.append("d");
+        }
+        if(hours>0) {
+            sb.append(hours);
+            sb.append("h");
+        }
+        if(minutes>0) {
+            sb.append(minutes);
+            sb.append("m");
+        }
+        if(seconds>0) {
+            sb.append(seconds);
+            sb.append("s");
+        }
+
+        Log.d(TAG,sb.toString());
+
+        time_info.setText(sb.toString());
+    }
+
+    public void setInfoDist(double dist){
+
+        String ad = "m";
+        if(dist>1000){
+           dist=dist/1000;
+            ad = "km";
+        }
+
+        StringBuffer dist_print = new StringBuffer();
+        dist_print.append(String.format( "%.2f", dist )+ad);
+
+        distance_info.setText(dist_print.toString());
+
+    }
+
+    public void setInfoWork(double work){
+
+        String ad = "W";
+        if(work>1000){
+            work=work/1000;
+            ad = "kW";
+        }
+
+        StringBuffer work_print = new StringBuffer();
+        work_print.append(String.format( "%.2f", work )+ad);
+
+        work_info.setText(work_print.toString());
+        setVisibile();
+    }
+
     private void getRoute(Position origin, Position destination) throws ServicesException {
 
         MapboxDirections client = new MapboxDirections.Builder()
@@ -202,12 +305,12 @@ public class FragmentMap  extends Fragment {
                     return;
                 }
 
+                Log.d(TAG,"Quantity: "+response.body().getRoutes().size());
                 // Print some info about the route
-                Log.d(TAG,"Routes: "+response.body().getRoutes().get(0).getDuration());
+                Log.d(TAG,"Time: "+response.body().getRoutes().get(0).getDuration());
                 currentRoute = response.body().getRoutes().get(0);
                 Log.d(TAG, "Distance: " + currentRoute.getDistance());
                 Toast.makeText(mContext, "Route is " +  currentRoute.getDistance() + " meters long.", Toast.LENGTH_SHORT).show();
-
                 // Draw the route on the map
                 drawRoute(currentRoute);
             }
@@ -220,11 +323,26 @@ public class FragmentMap  extends Fragment {
         });
     }
 
+    private double calculateWork(ArrayList<Double> elevations){
+        double work = 0;
+        double h1 = elevations.get(0);
+
+        for(int i=1;i<elevations.size();i++){
+            work+=Math.abs(h1-elevations.get(i))*9.832;
+            h1=elevations.get(i);
+        }
+
+        return work;
+    }
+
     private void drawRoute(DirectionsRoute route) {
         // Convert LineString coordinates into LatLng[]
 
         LineString lineString = LineString.fromPolyline(route.getGeometry(), Constants.OSRM_PRECISION_V5);
         List<Position> coordinates = lineString.getCoordinates();
+
+        double distance = route.getDistance();
+        double time = route.getDuration();
 
         StringBuffer elevCoordinates = new StringBuffer();
 
@@ -234,19 +352,21 @@ public class FragmentMap  extends Fragment {
         for (int i = 0; i < coordinates.size(); i++) {
 
             if(i>0)
-                elevCoordinates.append(";"+coordinates.get(i).getLatitude()+","+coordinates.get(i).getLongitude());
+                elevCoordinates.append("|"+coordinates.get(i).getLatitude()+","+coordinates.get(i).getLongitude());
 
             points[i] = new LatLng(
                     coordinates.get(i).getLatitude(),
                     coordinates.get(i).getLongitude());
         }
 
-
         try {
-            GetElevation.getElevation(elevCoordinates.toString(),mContext);
+            getElevationfromGoogleMaps(elevCoordinates.toString());
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
+
+        setInfoDist(distance);
+        setTime(time);
 
         // Draw Points on MapView
         map.addPolyline(new PolylineOptions()
@@ -255,26 +375,59 @@ public class FragmentMap  extends Fragment {
                 .width(5));
     }
 
-    private void getElevationFromGoogleMaps(String requisition) throws IOException {
-
+    public void getElevationfromGoogleMaps(String requisition) throws MalformedURLException {
         StringBuffer uri = new StringBuffer();
-        uri.append("https://maps.googleapis.com/maps/api/elevation/json?path=");
+        uri.append("https://maps.googleapis.com/maps/api/elevation/json?locations=");
         uri.append(requisition);
         uri.append("&key=");
         uri.append(mContext.getResources().getString(R.string.accessTokenGoogle));
 
         URL url = new URL(uri.toString());
 
-        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+        JsonObjectRequest jsObjRequest = new JsonObjectRequest
+                (Request.Method.GET, url.toString(), null, new com.android.volley.Response.Listener<JSONObject>() {
 
-        try{
-            InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-            Log.d(TAG,in.toString());
-        }finally {
-            urlConnection.disconnect();
-        }
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        //we are interested in the results
 
+                        ArrayList<Double> elevations = new ArrayList<>();
+
+                        try {
+                            JSONArray results = response.getJSONArray("results");
+                            //iterate through the results
+                            for(int i = 0; i<results.length();i++)
+                            {
+                                JSONObject single = (JSONObject) results.get(i);
+                                //for example, to get the location which is nested 2 levels in
+                                double elevation = single.getDouble("elevation");
+                                //within geometry object is location
+                                JSONObject location = single.getJSONObject("location");
+
+                                elevations.add(elevation);
+                            }
+
+                            double work = calculateWork(elevations);
+
+                            Log.d(TAG,"Quant "+elevations.size()+" work: "+work);
+                            setInfoWork(work);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                }, new com.android.volley.Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO Auto-generated method stub
+                        Log.d("Error", error.toString());
+                    }
+                });
+
+        VolleySingleton.getInstance(mContext).addToRequestQueue(jsObjRequest);
     }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
