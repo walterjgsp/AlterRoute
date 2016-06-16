@@ -250,7 +250,7 @@ public class FragmentMap  extends Fragment {
             sb.append("s");
         }
 
-        Log.d(TAG,sb.toString());
+        Log.d(TAG,sb.toString()+" AQUI");
 
         time_info.setText(sb.toString());
     }
