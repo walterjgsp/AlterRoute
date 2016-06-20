@@ -21,6 +21,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.dwv.alterroute.Data.GeoINFO;
 import com.dwv.alterroute.Misc.VolleySingleton;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.annotations.PolylineOptions;
@@ -39,6 +40,7 @@ import com.mapbox.services.directions.v5.DirectionsCriteria;
 import com.mapbox.services.directions.v5.MapboxDirections;
 import com.mapbox.services.directions.v5.models.DirectionsResponse;
 import com.mapbox.services.directions.v5.models.DirectionsRoute;
+import com.mapbox.services.directions.v5.models.LegStep;
 import com.mapbox.services.geocoding.v5.GeocodingCriteria;
 import com.mapbox.services.geocoding.v5.models.GeocodingFeature;
 
@@ -224,13 +226,13 @@ public class FragmentMap  extends Fragment {
 
         long millis = (long) time;
 
-        long days = TimeUnit.MILLISECONDS.toDays(millis);
+        long days = TimeUnit.SECONDS.toDays(millis);
         millis -= TimeUnit.DAYS.toMillis(days);
-        long hours = TimeUnit.MILLISECONDS.toHours(millis);
+        long hours = TimeUnit.SECONDS.toHours(millis);
         millis -= TimeUnit.HOURS.toMillis(hours);
-        long minutes = TimeUnit.MILLISECONDS.toMinutes(millis);
+        long minutes = TimeUnit.SECONDS.toMinutes(millis);
         millis -= TimeUnit.MINUTES.toMillis(minutes);
-        long seconds = TimeUnit.MILLISECONDS.toSeconds(millis);
+        long seconds = TimeUnit.SECONDS.toSeconds(millis);
 
         StringBuilder sb = new StringBuilder(64);
         if(days>0) {
@@ -250,7 +252,6 @@ public class FragmentMap  extends Fragment {
             sb.append("s");
         }
 
-        Log.d(TAG,sb.toString()+" AQUI");
 
         time_info.setText(sb.toString());
     }
@@ -268,6 +269,15 @@ public class FragmentMap  extends Fragment {
 
         distance_info.setText(dist_print.toString());
 
+    }
+
+    public void setIncliWork(double incliWork){
+
+        StringBuffer work_print = new StringBuffer();
+        work_print.append(String.format( "%.2f", incliWork ));
+
+        work_info.setText(work_print.toString()+'%');
+        setVisibile();
     }
 
     public void setInfoWork(double work){
@@ -293,6 +303,7 @@ public class FragmentMap  extends Fragment {
                 .setDestination(Position.fromCoordinates(destination.getLatitude(),destination.getLongitude()))
                 .setProfile(DirectionsCriteria.PROFILE_DRIVING)
                 .setAlternatives(true)
+                .setSteps(true)
                 .build();
 
         client.enqueueCall(new Callback<DirectionsResponse>() {
@@ -306,11 +317,7 @@ public class FragmentMap  extends Fragment {
                 }
 
                 Log.d(TAG,"Quantity: "+response.body().getRoutes().size());
-                // Print some info about the route
-                Log.d(TAG,"Time: "+response.body().getRoutes().get(0).getDuration());
                 currentRoute = response.body().getRoutes().get(0);
-                Log.d(TAG, "Distance: " + currentRoute.getDistance());
-                Toast.makeText(mContext, "Route is " +  currentRoute.getDistance() + " meters long.", Toast.LENGTH_SHORT).show();
                 // Draw the route on the map
                 drawRoute(currentRoute);
             }
@@ -323,16 +330,31 @@ public class FragmentMap  extends Fragment {
         });
     }
 
-    private double calculateWork(ArrayList<Double> elevations){
+    private double calculateWork(ArrayList<GeoINFO> elevations){
         double work = 0;
-        double h1 = elevations.get(0);
+        double h1 = elevations.get(0).getElevation();
 
         for(int i=1;i<elevations.size();i++){
-            work+=Math.abs(h1-elevations.get(i))*9.832;
-            h1=elevations.get(i);
+            work+=Math.abs(h1-elevations.get(i).getElevation())*9.832;
+            h1=elevations.get(i).getElevation();
         }
 
         return work;
+    }
+
+    private double biggestInclination(ArrayList<GeoINFO> elevations){
+
+        double incl_Max = 0;
+        GeoINFO point = elevations.get(0);
+
+        for(int i=1;i<elevations.size();i++){
+            double incl_temp = point.inclinationTo(elevations.get(i));
+            if(incl_temp>incl_Max)
+                incl_Max=incl_temp;
+            point=elevations.get(i);
+        }
+
+        return incl_Max;
     }
 
     private void drawRoute(DirectionsRoute route) {
@@ -360,7 +382,7 @@ public class FragmentMap  extends Fragment {
         }
 
         try {
-            getElevationfromGoogleMaps(elevCoordinates.toString());
+            getElevationfromGoogleMaps(elevCoordinates.toString(),route.getLegs().get(0).getSteps());
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -375,7 +397,7 @@ public class FragmentMap  extends Fragment {
                 .width(5));
     }
 
-    public void getElevationfromGoogleMaps(String requisition) throws MalformedURLException {
+    public void getElevationfromGoogleMaps(String requisition, final List<LegStep> steps) throws MalformedURLException {
         StringBuffer uri = new StringBuffer();
         uri.append("https://maps.googleapis.com/maps/api/elevation/json?locations=");
         uri.append(requisition);
@@ -391,7 +413,7 @@ public class FragmentMap  extends Fragment {
                     public void onResponse(JSONObject response) {
                         //we are interested in the results
 
-                        ArrayList<Double> elevations = new ArrayList<>();
+                        ArrayList<GeoINFO> elevations = new ArrayList<>();
 
                         try {
                             JSONArray results = response.getJSONArray("results");
@@ -403,14 +425,19 @@ public class FragmentMap  extends Fragment {
                                 double elevation = single.getDouble("elevation");
                                 //within geometry object is location
                                 JSONObject location = single.getJSONObject("location");
+                                double lat = location.getDouble("lat");
+                                double lng = location.getDouble("lng");
 
-                                elevations.add(elevation);
+                                elevations.add(new GeoINFO(lat,lng,elevation));
                             }
+
+                            double incli = biggestInclination(elevations);
 
                             double work = calculateWork(elevations);
 
                             Log.d(TAG,"Quant "+elevations.size()+" work: "+work);
-                            setInfoWork(work);
+                            setIncliWork(incli);
+                            //setInfoWork(work);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
